@@ -3,20 +3,28 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "main.h"
+extern TIM_HandleTypeDef htim6;
+__forceinline void Delay_us(uint32_t us) {
+  htim6.Instance->CNT = 0;
+  while(htim6.Instance->CNT < (us)) {}
+} // for delay
 
 /// SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed (period): 150ns (6.66MHz)
-#define Delay_US(x)   HAL_Delay(x)                          // Place your delay function in microseconds
-#define Debug_Enable                                        // Uncomment if you want to use (depends on printf in stdio.h)
-#define ADCValueToVoltage(x) (x * 2.048 /*VREFF*/ / 0x7FFFFF) // Use this to conver ADC value to Voltage
+#define Delay_US(x)    Delay_us(x)                            // Place your delay function in microseconds
+#define Debug_Enable                                          // Uncomment if you want to use (depends on printf in stdio.h)
+#define ADCValueToVoltage(x) (x * 2.048 /*VREFF*/ / 0x7FFFFF) // Use this to convert ADC value to Voltage
+
 
 // Input Values :
 typedef struct ADS1220_Handler_s {
-  void (*ADC_CS_HIGH)(void);          // Must be initialized
-  void (*ADC_CS_LOW)(void);           // Must be initialized
-  void (*ADC_Transmit)(uint8_t Data); // Must be initialized
-  uint8_t (*ADC_Receive)(void);       // Must be initialized
-  uint8_t (*ADC_DRDY_Read)(void);     // Can be initialized
+  void (*ADC_CS_HIGH)(void);                     // Must be initialized
+  void (*ADC_CS_LOW)(void);                      // Must be initialized
+  void (*ADC_Transmit)(uint8_t Data);            // Must be initialized
+  uint8_t (*ADC_Receive)(void);                  // Must be initialized
+  uint8_t (*ADC_TransmitReceive)(uint8_t Data);  // Can be initialized - Initialize this when you want to use ReadAllContinuous functions
+  uint8_t (*ADC_DRDY_Read)(void);                // Can be initialized - Initialize this when you want to use ReadAllContinuous functions
 } ADS1220_Handler;
 
 typedef enum ADS1220_InputMuxConfig_e { // These bits configure the input multiplexer.
@@ -52,7 +60,7 @@ typedef enum ADS1220_GainConfig_e { // These bits configure the device gain. Gai
 
 typedef enum ADS1220_DataRate_e { // These bits control the data rate setting depending on the selected operating mode.
   // For Normal Mode
-  _20_SPS_      = 0,
+  _20_SPS_      = 0, // (defualt)
   _45_SPS_      = 1,
   _30_SPS_      = 2,
   _175_SPS_     = 3,
@@ -60,15 +68,15 @@ typedef enum ADS1220_DataRate_e { // These bits control the data rate setting de
   _600_SPS_     = 5,
   _1000_SPS_    = 6,
   // For Duty Cycle Mode
-  _5_SPS_       = 0,
-  _11_25_SPS_   = 1,
+  _5_SPS_       = 0, // (defualt)
+  _11_25_SPS_   = 1, // 11.25
   _22_5_SPS_    = 2,
   _44_SPS_      = 3,
   _82_5_SPS_    = 4,
   _150_SPS_     = 5,
   _250_SPS_     = 6,
   // For Turbo Mode
-  _40_SPS_      = 0,
+  _40_SPS_      = 0, // (defualt)
   _90_SPS_      = 1,
   _180_SPS_     = 2,
   _350_SPS_     = 3,
@@ -123,9 +131,10 @@ typedef enum ADS1220_IDACrouting_e { // These bits select the channel where IDAC
 typedef struct ADS1220_Parameters_s {
   // REG 00h:
   // See ADS1220_InputMuxConfig enum
-  ADS1220_InputMuxConfig InputMuxConfig;
+  // IMPORTANT NOTE : For settings where AINN = AVSS, the PGA must be disabled (PGA_BYPASS = 1) and only gains 1, 2, and 4 can be used.
+  ADS1220_InputMuxConfig InputMuxConfig; // default: AINP = AIN0, AINN = AIN1
   // See ADS1220_GainConfig enum
-  ADS1220_GainConfig     GainConfig;
+  ADS1220_GainConfig     GainConfig; // default: 1
   // Disables and bypasses the internal low-noise PGA
   // Disabling the PGA reduces overall power consumption and allows the commonmode
   // voltage range (VCM) to span from AVSS – 0.1 V to AVDD + 0.1 V.
@@ -136,9 +145,9 @@ typedef struct ADS1220_Parameters_s {
   
   // REG 01h:
   // See ADS1220_DataRate enum
-  ADS1220_DataRate       DataRate;
+  ADS1220_DataRate       DataRate; // default: NormalMode: 20SPS | DutyCycleMode: 5SPS | TurboMode: 40SPS
   // See ADS1220_OperatingMode enum
-  ADS1220_OperatingMode  OperatingMode;
+  ADS1220_OperatingMode  OperatingMode; // default: NormalMode
   // This bit sets the conversion mode for the device.
   bool                   ConversionMode; // 0: Single-shot mode (default) | 1: Continuous conversion mode
   // This bit enables the internal temperature sensor and puts the device in temperature sensor mode.
@@ -152,9 +161,9 @@ typedef struct ADS1220_Parameters_s {
   
   // REG 02h:
   // See ADS1220_VoltageRef enum
-  ADS1220_VoltageRef     VoltageRef;
+  ADS1220_VoltageRef     VoltageRef; // default: Internal 2.048V
   // See ADS1220_FIRFilter enum
-  ADS1220_FIRFilter      FIRFilter;
+  ADS1220_FIRFilter      FIRFilter; // default: No rejection
   // This bit configures the behavior of the low-side switch connected between AIN3/REFN1 and AVSS.
   bool                   LowSodePwr; // 0: Switch is always open (default) | 1: Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
   // See ADS1220_IDACcurrent enum
@@ -162,16 +171,17 @@ typedef struct ADS1220_Parameters_s {
   
   // REG 03h:
   // See ADS1220_IDACrouting enum , This is for IDAC1
-  ADS1220_IDACrouting    IDAC1routing;
+  ADS1220_IDACrouting    IDAC1routing; // default: Off
   // See ADS1220_IDACrouting enum , This is for IDAC2
-  ADS1220_IDACrouting    IDAC2routing;
+  ADS1220_IDACrouting    IDAC2routing; // default: Off
   // This bit controls the behavior of the DOUT/DRDY pin when new data are ready.
   bool                   DRDYMode; // 0: Only the dedicated DRDY pin is used to indicate when data are ready (default) | 1: Data ready is indicated simultaneously on DOUT/DRDY and DRDY
 } ADS1220_Parameters;
 
 // Public Functions :
+
 /* ADS1220_Init :
- * @note: All Settings set default. See ADS1220_Parameters struct to know default values
+ * @note: All Settings set default. See ADS1220_Parameters struct to know what are default values
  */
 void ADS1220_Init(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters);
 
@@ -180,11 +190,90 @@ void ADS1220_Init(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters)
  */
 void ADS1220_StartSync(ADS1220_Handler *ADC_Handler);
 
+/* ADS1220_PowerDown :
+ * Reset ADS1220
+ */
+void ADS1220_Reset(ADS1220_Handler *ADC_Handler);
+
+/* ADS1220_PowerDown :
+ * Enable Power down
+ */
+void ADS1220_PowerDown(ADS1220_Handler *ADC_Handler);
+
 /* ADS1220_ReadData :
  * Read Data for both Single-shot and Continuous conversion Modes
  * @note: Call This function when DRDY pin got LOW
  */
-void ADS1220_ReadData(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 1 (To read other channels user should config InputMuxConfig in ADS1220_Parameters)*/);
+void ADS1220_ReadData(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 1 (To read other channels user should config InputMuxConfig in ADS1220_Parameters or USE ReadAll functions)*/);
+
+/* ADS1220_ChangeConfig :
+ * Changing Configurations
+ * @note: Pass Parametersa as NULL to change settings to default Values. See ADS1220_Parameters struct to know what are default values
+ */
+void ADS1220_ChangeConfig(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters);
+
+/* ADS1220_ChangeGain :
+ * Change Gains. See ADS1220_GainConfig enum
+ */
+void ADS1220_ChangeGain(ADS1220_Handler *ADC_Handler, ADS1220_GainConfig GainConfig);
+
+/* ADS1220_ActiveSingleShotMode :
+ * Activate Single-Shot Mode (Deactivate Continuous Mode)
+ */
+void ADS1220_ActivateSingleShotMode(ADS1220_Handler *ADC_Handler);
+
+/* ADS1220_ChangeContinuousMode :
+ * Activate Continuous Mode (Deactivate Single-Shot Mode)
+ */
+void ADS1220_ActivateContinuousMode(ADS1220_Handler *ADC_Handler);
+
+/* ADS1220_ReadAllSingleShotDiff :
+ * Read All channels data for Single-shot Mode
+ * Channel1: AINP = AIN0, AINN = AIN1
+ * Channel2: AINP = AIN2, AINN = AIN3
+ * @note ADS1220 Must be in Single-shot Mode.
+ *       Pass GainConfig as NULL to use current values for gain configurations.
+ *       At the end, configurations will be changed to previous values.
+ */
+void ADS1220_ReadAllSingleShotDiff(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 2 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 2 | [0]: Channel1*/);
+
+/* ADS1220_ReadAllContinuousDiff :
+ * Read All channels data for Continuous conversion Mode
+ * Channel1: AINP = AIN0, AINN = AIN1
+ * Channel2: AINP = AIN2, AINN = AIN3
+ * @note ADS1220 Must be in Continuous conversion Mode.
+ *       Pass GainConfig as NULL to use current values for gain configurations.
+ *       At the end, configurations will be changed to previous values.
+ */
+void ADS1220_ReadAllContinuousDiff(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 2 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 2 | [0]: Channel1*/);
+
+/* ADS1220_ReadAllSingleShotAVSS :
+ * Read All channels data for Single-shot Mode
+ * Channel1: AINP = AIN0, AINN = AVSS
+ * Channel2: AINP = AIN1, AINN = AVSS
+ * Channel3: AINP = AIN2, AINN = AVSS
+ * Channel4: AINP = AIN3, AINN = AVSS
+ * @note ADS1220 Must be in Single-shot Mode
+ *       Pass GainConfig as NULL to use current values for gain configurations.
+ *       The PGA will be disabled (PGA_BYPASS = 1)
+ *       Gains must be only 1, 2, and 4. See ADS1220_InputMuxConfig struct for more details.
+ *       At the end, configurations will be changed to previous values.
+ */
+void ADS1220_ReadAllSingleShotAVSS(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 4 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 4 | [0]: Channel1*/);
+
+/* ADS1220_ReadAllContinuousAVSS :
+ * Read All channels data for Continuous conversion Mode
+ * Channel1: AINP = AIN0, AINN = AVSS
+ * Channel2: AINP = AIN1, AINN = AVSS
+ * Channel3: AINP = AIN2, AINN = AVSS
+ * Channel4: AINP = AIN3, AINN = AVSS
+ * @note ADS1220 Must be in Continuous conversion Mode
+ *       Pass GainConfig as NULL to use current values for gain configurations.
+ *       The PGA will be disabled (PGA_BYPASS = 1)
+ *       Gains must be only 1, 2, and 4. See ADS1220_InputMuxConfig struct for more details.
+ *       At the end, configurations will be changed to previous values.
+ */
+void ADS1220_ReadAllContinuousAVSS(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 4 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 4 | [0]: Channel1*/);
 
 
 #endif
