@@ -14,7 +14,7 @@ __forceinline void Delay_us(uint32_t us) {
 /// SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed (period): 150ns (6.66MHz)
 #define Delay_US(x)    Delay_us(x)                            // Place your delay function in microseconds
 #define Debug_Enable                                          // Uncomment if you want to use (depends on printf in stdio.h)
-#define ADCValueToVoltage(x) (x * 2.048 /*VREFF*/ / 0x7FFFFF) // Use this to convert ADC value to Voltage
+#define ADCValueToVoltage(x) (x * 2.048 /*VREFF*/ / 0x7FFFFF / 1 /*Gain*/) // Use this to convert ADC value to Voltage
 
 
 // Input Values :
@@ -41,8 +41,8 @@ typedef enum ADS1220_InputMuxConfig_e { // These bits configure the input multip
   P1NAVSS   = 9,  // AINP = AIN1, AINN = AVSS
   P2NAVSS   = 10, // AINP = AIN2, AINN = AVSS
   P3NAVSS   = 11, // AINP = AIN3, AINN = AVSS
-  Mode1     = 12, // (V(REFPx) – V(REFNx)) / 4 monitor (PGA bypassed)
-  Mode2     = 13, // (AVDD – AVSS) / 4 monitor (PGA bypassed)
+  Mode1     = 12, // (V(REFPx) ï¿½ V(REFNx)) / 4 monitor (PGA bypassed)
+  Mode2     = 13, // (AVDD ï¿½ AVSS) / 4 monitor (PGA bypassed)
   Mode3     = 14  // AINP and AINN shorted to (AVDD + AVSS) / 2
 } ADS1220_InputMuxConfig;
 
@@ -95,7 +95,7 @@ typedef enum ADS1220_VoltageRef_e { // These bits select the voltage reference s
   Internal      = 0, // Internal 2.048-V reference selected (default)
   ExternalREF0  = 1, // External reference selected using dedicated REFP0 and REFN0 inputs
   ExternalREF1  = 2, // External reference selected using AIN0/REFP1 and AIN3/REFN1 inputs
-  AnalogSupply  = 3  // Analog supply (AVDD – AVSS) used as reference
+  AnalogSupply  = 3  // Analog supply (AVDD ï¿½ AVSS) used as reference
 } ADS1220_VoltageRef;
 
 typedef enum ADS1220_FIRFilter_e { // These bits configure the filter coefficients for the internal FIR filter.
@@ -137,7 +137,7 @@ typedef struct ADS1220_Parameters_s {
   ADS1220_GainConfig     GainConfig; // default: 1
   // Disables and bypasses the internal low-noise PGA
   // Disabling the PGA reduces overall power consumption and allows the commonmode
-  // voltage range (VCM) to span from AVSS – 0.1 V to AVDD + 0.1 V.
+  // voltage range (VCM) to span from AVSS ï¿½ 0.1 V to AVDD + 0.1 V.
   // The PGA can only be disabled for gains 1, 2, and 4.
   // The PGA is always enabled for gain settings 8 to 128, regardless of the
   // PGA_BYPASS setting.
@@ -154,7 +154,7 @@ typedef struct ADS1220_Parameters_s {
   // The settings of configuration register 0 have no effect and the device uses the
   // internal reference for measurement when temperature sensor mode is enabled.
   bool                   TempeSensorMode; // 0: Disables temperature sensor (default) | 1: Enables temperature sensor
-  // This bit controls the 10-µA, burn-out current sources.
+  // This bit controls the 10-ï¿½A, burn-out current sources.
   // The burn-out current sources can be used to detect sensor faults such as wire
   // breaks and shorted sensors.
   bool                   BurnOutCurrentSrc; // 0: Current sources off (default) | 1: Current sources on

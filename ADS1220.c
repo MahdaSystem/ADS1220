@@ -146,7 +146,7 @@ void ADS1220_Init(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters)
   
   if (Parameters)
   {
-    RegsValue[0] = (Parameters->InputMuxConfig << 4) | (Parameters->PGAdisable << 1) | Parameters->PGAdisable;
+    RegsValue[0] = (Parameters->InputMuxConfig << 4) | (Parameters->GainConfig << 1) | Parameters->PGAdisable;
     RegsValue[1] = (Parameters->DataRate << 5) | (Parameters->OperatingMode << 3) | (Parameters->ConversionMode << 2) | (Parameters->TempeSensorMode << 1) | Parameters->BurnOutCurrentSrc;
     RegsValue[2] = (Parameters->VoltageRef << 6) | (Parameters->FIRFilter << 4) | (Parameters->LowSodePwr << 3) | Parameters->IDACcurrent;
     RegsValue[3] = (Parameters->IDAC1routing << 5) | (Parameters->IDAC2routing << 2) | (Parameters->DRDYMode << 1);
