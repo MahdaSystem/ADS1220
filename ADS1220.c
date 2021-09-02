@@ -1,6 +1,43 @@
+/**
+ **********************************************************************************
+ * @file   ADS1220.c
+ * @author Ali Moallem (https://github.com/AliMoal)
+ * @brief  
+ *         Functionalities of the this file:
+ *          + 
+ *          + 
+ *          + 
+ **********************************************************************************
+ *
+ *! Copyright (c) 2021 Mahda Embedded System (MIT License)
+ *!
+ *! Permission is hereby granted, free of charge, to any person obtaining a copy
+ *! of this software and associated documentation files (the "Software"), to deal
+ *! in the Software without restriction, including without limitation the rights
+ *! to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *! copies of the Software, and to permit persons to whom the Software is
+ *! furnished to do so, subject to the following conditions:
+ *!
+ *! The above copyright notice and this permission notice shall be included in all
+ *! copies or substantial portions of the Software.
+ *!
+ *! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *! IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *! FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *! AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *! LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *! SOFTWARE.
+ *!
+ **********************************************************************************
+ **/
+//* Private Includes -------------------------------------------------------------- //
 #include "ADS1220.h"
 
+//* Private Defines and Macros ---------------------------------------------------- //
 #define ADS1220_RawToAdcValue(oneData) ((int32_t)(((oneData[0] << 16) | (oneData[1] << 8) | (oneData[2])) << 8) / 256)
+
+//* Others ------------------------------------------------------------------------ //
 #ifdef Debug_Enable
 #include <stdio.h> // for debug
 #define PROGRAMLOG(arg...) printf(arg)
@@ -8,37 +45,37 @@
 #define PROGRAMLOG(arg...)
 #endif
 
-typedef enum ADS1220Commands_s {
+/**
+ ** ==================================================================================
+ **                                ##### Enums #####                               
+ ** ==================================================================================
+ **/
+
+typedef enum
+ADS1220Commands_s {
 	RESET_ADC			= 0x06,
 	START_SYNC		= 0x08,
 	POWERDOWN			= 0x02,
 	RDATA					=	0x10,
 	RREG					= 0x20,
 	WREG					= 0x40
-} ADS1220Commands;
+} ADS1220Commands_t;
 
-typedef enum ADS1220Register_s {
+typedef enum
+ADS1220Register_s {
 	REGISTER00h						=	0x00,
   REGISTER01h						=	0x01,
   REGISTER02h						=	0x02,
   REGISTER03h						=	0x03,
-} ADS1220Register;
+} ADS1220Register_t;
 
-#pragma anon_unions
-typedef union ADS131_OneSample_u {
-  struct {
-    uint32_t Zero :8; // Always Zero
-    uint32_t Part1:8;
-    uint32_t Part2:8;
-    uint32_t Part3:8;
-  };
-  int32_t INT32;
-} ADS131_OneSample;
-
-static ADS131_OneSample ADCDataValues = {0};
-
-/* Private Functions ------------------------------------------------------------ */
-static uint8_t ADS1220_ReadReg (ADS1220_Handler *ADC_Handler,ADS1220Register ADS1220REG)
+/**
+ *! ==================================================================================
+ *!                          ##### Private Functions #####                               
+ *! ==================================================================================
+ **/
+static uint8_t
+ADS1220_ReadReg (ADS1220_Handler_t *ADC_Handler,ADS1220Register_t ADS1220REG)
 {
 	uint8_t RecByte = 0;
   Delay_US(10);
@@ -72,7 +109,9 @@ static uint8_t ADS1220_ReadReg (ADS1220_Handler *ADC_Handler,ADS1220Register ADS
 //	ADC_Handler->ADC_CS_HIGH();
 //  Delay_US(10);
 //};
-static void ADS1220_WriteReg (ADS1220_Handler *ADC_Handler, ADS1220Register ADS1220REG, uint8_t RegisterValue)
+
+static void
+ADS1220_WriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG, uint8_t RegisterValue)
 {
   Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
@@ -85,7 +124,8 @@ static void ADS1220_WriteReg (ADS1220_Handler *ADC_Handler, ADS1220Register ADS1
   Delay_US(10);
 };
 
-static void ADS1220_WriteAllRegs (ADS1220_Handler *ADC_Handler, uint8_t *RegisterValue /*Must be = [0]: REG00h | Number of Elements: 4*/)
+static void
+ADS1220_WriteAllRegs (ADS1220_Handler_t *ADC_Handler, uint8_t *RegisterValue /*Must be = [0]: REG00h | Number of Elements: 4*/)
 {
   Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
@@ -104,7 +144,8 @@ static void ADS1220_WriteAllRegs (ADS1220_Handler *ADC_Handler, uint8_t *Registe
   Delay_US(10);
 };
 
-static void ADS1220_ReadDataWriteReg (ADS1220_Handler *ADC_Handler, ADS1220Register ADS1220REG, uint8_t RegisterValue, int32_t *ADCSample)
+static void
+ADS1220_ReadDataWriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG, uint8_t RegisterValue, int32_t *ADCSample)
 {
   Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
@@ -121,8 +162,21 @@ static void ADS1220_ReadDataWriteReg (ADS1220_Handler *ADC_Handler, ADS1220Regis
 //  PROGRAMLOG("%x\r\n",(ADCDataValues.Part3<<16) | (ADCDataValues.Part2<<8) | (ADCDataValues.Part1));
 };
 
-/* Public Functions ------------------------------------------------------------ */
-void ADS1220_Init(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters)
+/**
+ ** ==================================================================================
+ **                           ##### Public Functions #####                               
+ ** ==================================================================================
+ **/
+
+/**
+ * @brief  Initializes The ADC and Library
+ * @note   If You pass Parameters as NULL, All Settings will set default. See ADS1220_Parameters struct to know what are default values
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  Parameters:  Pointer Of ADC Parameters
+ * @retval None
+ */
+void
+ADS1220_Init(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
 {
   if (!ADC_Handler) { PROGRAMLOG("ERROR Please Initialize ADC_Handler"); return; }
   PROGRAMLOG("%s",((ADC_Handler->ADC_TransmitReceive != NULL) & (ADC_Handler->ADC_DRDY_Read != NULL)) ? ("") : ("*** Warning! You Can NOT Use ReadAllContinuous Functions. ***\r\n*** Initialize both ADC_TransmitReceive and ADC_DRDY_Read in ADC_Handler struct ***\r\n\r\n"));
@@ -175,7 +229,13 @@ void ADS1220_Init(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters)
   }
 };
 
-void ADS1220_StartSync(ADS1220_Handler *ADC_Handler)
+/**
+ * @brief  Starts (in Single-shot mode) or Syncs (in Continuous conversion mode) Conversion
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @retval None
+ */
+void
+ADS1220_StartSync(ADS1220_Handler_t *ADC_Handler)
 {
   Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
@@ -186,7 +246,13 @@ void ADS1220_StartSync(ADS1220_Handler *ADC_Handler)
   Delay_US(10);
 }
 
-void ADS1220_Reset(ADS1220_Handler *ADC_Handler)
+/**
+ * @brief  Resets ADS1220
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @retval None
+ */
+void
+ADS1220_Reset(ADS1220_Handler_t *ADC_Handler)
 {
   Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
@@ -197,7 +263,13 @@ void ADS1220_Reset(ADS1220_Handler *ADC_Handler)
   Delay_US(100);
 }
 
-void ADS1220_PowerDown(ADS1220_Handler *ADC_Handler)
+/**
+ * @brief  Enables Power down
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @retval None
+ */
+void
+ADS1220_PowerDown(ADS1220_Handler_t *ADC_Handler)
 {
   Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
@@ -208,7 +280,15 @@ void ADS1220_PowerDown(ADS1220_Handler *ADC_Handler)
   Delay_US(10);
 }
 
-void ADS1220_ReadData(ADS1220_Handler *ADC_Handler, int32_t *ADCSample)
+/**
+ * @brief  Reads Data for both Single-shot and Continuous conversion Modes
+ * @note   Call This function when DRDY pin got LOW
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  ADCSample:   Pointer Of Samples Array | Number of Elements: 1 (To read other channels user should config InputMuxConfig in ADS1220_Parameters or USE ReadAll functions)
+ * @retval None
+ */
+void
+ADS1220_ReadData(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample)
 {
   Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
@@ -225,8 +305,15 @@ void ADS1220_ReadData(ADS1220_Handler *ADC_Handler, int32_t *ADCSample)
 //  PROGRAMLOG("Data read: 0x%02X\r\n",*ADCSample);
 }
 
-
-void ADS1220_ChangeConfig(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Parameters)
+/**
+ * @brief  Changes the Configurations
+ * @note   Pass Parameters as NULL to change settings to default Values. See ADS1220_Parameters struct to know what are default values
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  Parameters:  Pointer Of ADC Parameters
+ * @retval None
+ */
+void
+ADS1220_ChangeConfig(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
 {
   PROGRAMLOG("Previous Regs Values: 0x%02X | 0x%02X | 0x%02X | 0x%02X\r\n",
     ADS1220_ReadReg(ADC_Handler,REGISTER00h),
@@ -267,27 +354,60 @@ void ADS1220_ChangeConfig(ADS1220_Handler *ADC_Handler, ADS1220_Parameters * Par
   }
 }
 
-void ADS1220_ChangeGain(ADS1220_Handler *ADC_Handler, ADS1220_GainConfig GainConfig)
+/**
+ * @brief  Changes Gains
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  GainConfig:  Gain Configuration
+ *                      - See ADS1220_GainConfig enum
+ * @retval None
+ */
+void
+ADS1220_ChangeGain(ADS1220_Handler_t *ADC_Handler, ADS1220_GainConfig_t GainConfig)
 {
   PROGRAMLOG("Prevoius Gain: 2^%d\r\n",(ADS1220_ReadReg(ADC_Handler,REGISTER00h) >> 1) & 7);
   ADS1220_WriteReg(ADC_Handler,REGISTER00h,ADS1220_ReadReg(ADC_Handler,REGISTER00h) & (0xF1 | (GainConfig << 1)));
   PROGRAMLOG("New      Gain: 2^%d\r\n",(ADS1220_ReadReg(ADC_Handler,REGISTER00h) >> 1) & 7);
 }
 
-void ADS1220_ActivateSingleShotMode(ADS1220_Handler *ADC_Handler)
+/**
+ * @brief  Activates Single-Shot Mode (Deactivates Continuous Mode)
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @retval None
+ */
+void
+ADS1220_ActivateSingleShotMode(ADS1220_Handler_t *ADC_Handler)
 {
   ADS1220_WriteReg(ADC_Handler,REGISTER01h,ADS1220_ReadReg(ADC_Handler,REGISTER01h) & 0xFB);
   PROGRAMLOG("Single-Shot Mode is %s\r\n",((ADS1220_ReadReg(ADC_Handler,REGISTER01h) >> 2) & 1) ? ("Deactive") : ("Active"));
 }
 
-void ADS1220_ActivateContinuousMode(ADS1220_Handler *ADC_Handler)
+/**
+ * @brief  Activates Continuous Mode (Deactivates Single-Shot Mode)
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @retval None
+ */
+void
+ADS1220_ActivateContinuousMode(ADS1220_Handler_t *ADC_Handler)
 {
   ADS1220_WriteReg(ADC_Handler,REGISTER01h,ADS1220_ReadReg(ADC_Handler,REGISTER01h) | 0x04);
   PROGRAMLOG("Continuous Mode is %s\r\n",((ADS1220_ReadReg(ADC_Handler,REGISTER01h) >> 2) & 1) ? ("Active") : ("Deactive"));
 }
 
-
-void ADS1220_ReadAllSingleShotDiff(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 2 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 2 | [0]: Channel1*/)
+/**
+ * @brief  Reads All channels data for Single-shot Mode.
+ *         Channel1: AINP = AIN0, AINN = AIN1
+ *         Channel2: AINP = AIN2, AINN = AIN3
+ * @note   ADS1220 Must be in Single-shot Mode.
+ *         Pass GainConfig as NULL to use current values for gain configurations.
+ *         At the end, configurations will be changed to previous values.
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  ADCSample:   Pointer Of Samples Array | Number of Element: 2 | [0]: Channel1
+ * @param  GainConfig:  Gain Configuration | Number of Element: 2 | [0]: Channel1
+ *                      - See ADS1220_GainConfig enum
+ * @retval None
+ */
+void
+ADS1220_ReadAllSingleShotDiff(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample, ADS1220_GainConfig_t *GainConfig)
 {
   uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
   
@@ -320,7 +440,21 @@ void ADS1220_ReadAllSingleShotDiff(ADS1220_Handler *ADC_Handler, int32_t *ADCSam
   ADS1220_WriteReg(ADC_Handler,REGISTER00h,Reg00hValue);
 }
 
-void ADS1220_ReadAllContinuousDiff(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 2 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 2 | [0]: Channel1*/)
+/**
+ * @brief  Reads All channels data for Continuous conversion Mode.
+ *         Channel1: AINP = AIN0, AINN = AIN1
+ *         Channel2: AINP = AIN2, AINN = AIN3
+ * @note   ADS1220 Must be in Continuous conversion Mode.
+ *         Pass GainConfig as NULL to use current values for gain configurations.
+ *         At the end, configurations will be changed to previous values.
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  ADCSample:   Pointer Of Samples Array | Number of Element: 2 | [0]: Channel1
+ * @param  GainConfig:  Gain Configuration | Number of Element: 2 | [0]: Channel1
+ *                      - See ADS1220_GainConfig enum
+ * @retval None
+ */
+void
+ADS1220_ReadAllContinuousDiff(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample, ADS1220_GainConfig_t *GainConfig)
 {
   ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
   while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
@@ -344,7 +478,25 @@ void ADS1220_ReadAllContinuousDiff(ADS1220_Handler *ADC_Handler, int32_t *ADCSam
   }
 }
 
-void ADS1220_ReadAllSingleShotAVSS(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 4 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 4 | [0]: Channel1*/)
+/**
+ * @brief  Reads All channels data for Single-shot Mode.
+ *         Channel1: AINP = AIN0, AINN = AVSS
+ *         Channel2: AINP = AIN1, AINN = AVSS
+ *         Channel3: AINP = AIN2, AINN = AVSS
+ *         Channel4: AINP = AIN3, AINN = AVSS
+ * @note   ADS1220 Must be in Single-shot Mode.
+ *         Pass GainConfig as NULL to use current values for gain configurations.
+ *         The PGA will be disabled (PGA_BYPASS = 1)
+ *         At the end, configurations will be changed to previous values.
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  ADCSample:   Pointer Of Samples Array | Number of Element: 4 | [0]: Channel1
+ * @param  GainConfig:  Gain Configuration | Number of Element: 4 | [0]: Channel1
+ *         @note        Gains must be only 1, 2, and 4. See ADS1220_InputMuxConfig struct for more details.
+ *                      - See ADS1220_GainConfig enum
+ * @retval None
+ */
+void
+ADS1220_ReadAllSingleShotAVSS(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample, ADS1220_GainConfig_t *GainConfig)
 {
   uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
   
@@ -394,7 +546,25 @@ void ADS1220_ReadAllSingleShotAVSS(ADS1220_Handler *ADC_Handler, int32_t *ADCSam
   ADS1220_WriteReg(ADC_Handler,REGISTER00h,Reg00hValue);
 }
 
-void ADS1220_ReadAllContinuousAVSS(ADS1220_Handler *ADC_Handler, int32_t *ADCSample/*Number of Element: 4 | [0]: Channel1*/, ADS1220_GainConfig *GainConfig /*Number of Element: 4 | [0]: Channel1*/)
+/**
+ * @brief  Reads All channels data for Continuous conversion Mode.
+ *         Channel1: AINP = AIN0, AINN = AVSS
+ *         Channel2: AINP = AIN1, AINN = AVSS
+ *         Channel3: AINP = AIN2, AINN = AVSS
+ *         Channel4: AINP = AIN3, AINN = AVSS
+ * @note   ADS1220 Must be in Continuous conversion Mode.
+ *         Pass GainConfig as NULL to use current values for gain configurations.
+ *         The PGA will be disabled (PGA_BYPASS = 1)
+ *         At the end, configurations will be changed to previous values.
+ * @param  ADC_Handler: Pointer Of Library Handler
+ * @param  ADCSample:   Pointer Of Samples Array | Number of Element: 4 | [0]: Channel1
+ * @param  GainConfig:  Gain Configuration | Number of Element: 4 | [0]: Channel1
+ *         @note        Gains must be only 1, 2, and 4. See ADS1220_InputMuxConfig struct for more details.
+ *                      - See ADS1220_GainConfig enum
+ * @retval None
+ */
+void
+ADS1220_ReadAllContinuousAVSS(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample, ADS1220_GainConfig_t *GainConfig)
 {
   uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
   
