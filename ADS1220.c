@@ -2,14 +2,10 @@
  **********************************************************************************
  * @file   ADS1220.c
  * @author Ali Moallem (https://github.com/AliMoal)
- * @brief  
- *         Functionalities of the this file:
- *          + 
- *          + 
- *          + 
+ * @brief  For working with ADS1220 IC
  **********************************************************************************
  *
- *! Copyright (c) 2021 Mahda Embedded System (MIT License)
+ *! Copyright (c) 2022 Mahda Embedded System (MIT License)
  *!
  *! Permission is hereby granted, free of charge, to any person obtaining a copy
  *! of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +43,7 @@
 
 /**
  ** ==================================================================================
- **                                ##### Enums #####                               
+ **                            ##### Private Enums #####                               
  ** ==================================================================================
  **/
 
@@ -78,86 +74,86 @@ static uint8_t
 ADS1220_ReadReg (ADS1220_Handler_t *ADC_Handler,ADS1220Register_t ADS1220REG)
 {
 	uint8_t RecByte = 0;
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RREG | (ADS1220REG << 2));
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	RecByte = ADC_Handler->ADC_Receive();
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	return RecByte;
 };
 
 // This function Works but we do not need it
 //static void ADS1220_ReadAllRegs (ADS1220_Handler *ADC_Handler, uint8_t *ReadValues /*It is = [0]: REG00h | Number of Elements: 4*/)
 //{
-//  Delay_US(10);
+//  ADS131_Delay_US(10);
 //	ADC_Handler->ADC_CS_LOW();
-//	Delay_US(10);
-//	ADC_Handler->ADC_Transmit(RREG | 3 /*(num reg to read: 4) - 1*//*starts from reg00h*/);
-//	Delay_US(10);
+//	ADS131_Delay_US(10);
+//	ADC_Handler->ADC_Transmit(RREG | 3 /*(num reg to read: 4) - 1*/ /*starts from reg00h*/);
+//	ADS131_Delay_US(10);
 //	ReadValues[0] = ADC_Handler->ADC_Receive();
-//	Delay_US(10);
+//	ADS131_Delay_US(10);
 //  ReadValues[1] = ADC_Handler->ADC_Receive();
-//	Delay_US(10);
+//	ADS131_Delay_US(10);
 //  ReadValues[2] = ADC_Handler->ADC_Receive();
-//	Delay_US(10);
+//	ADS131_Delay_US(10);
 //  ReadValues[3] = ADC_Handler->ADC_Receive();
-//	Delay_US(10);
+//	ADS131_Delay_US(10);
 //	ADC_Handler->ADC_CS_HIGH();
-//  Delay_US(10);
+//  ADS131_Delay_US(10);
 //};
 
 static void
 ADS1220_WriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG, uint8_t RegisterValue)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_Transmit(WREG | (ADS1220REG << 2));
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RegisterValue);
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
 };
 
 static void
 ADS1220_WriteAllRegs (ADS1220_Handler_t *ADC_Handler, uint8_t *RegisterValue /*Must be = [0]: REG00h | Number of Elements: 4*/)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_Transmit(WREG | 3 /*(num reg to read: 4) - 1*//*starts from reg00h*/);
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RegisterValue[0]);
-	Delay_US(10);
+	ADS131_Delay_US(10);
   ADC_Handler->ADC_Transmit(RegisterValue[1]);
-	Delay_US(10);
+	ADS131_Delay_US(10);
   ADC_Handler->ADC_Transmit(RegisterValue[2]);
-	Delay_US(10);
+	ADS131_Delay_US(10);
   ADC_Handler->ADC_Transmit(RegisterValue[3]);
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
 };
 
 static void
 ADS1220_ReadDataWriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG, uint8_t RegisterValue, int32_t *ADCSample)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	Delay_US(10);
+	ADS131_Delay_US(10);
   ADCDataValues.Part3 = ADC_Handler->ADC_TransmitReceive(NULL);
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADCDataValues.Part2 = ADC_Handler->ADC_TransmitReceive(WREG | (ADS1220REG << 2));
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADCDataValues.Part1 = ADC_Handler->ADC_TransmitReceive(RegisterValue);
-	Delay_US(10);
+	ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   *ADCSample = ADCDataValues.INT32 / 256;
 //  PROGRAMLOG("%x\r\n",(ADCDataValues.Part3<<16) | (ADCDataValues.Part2<<8) | (ADCDataValues.Part1));
 };
@@ -181,13 +177,13 @@ ADS1220_Init(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
   if (!ADC_Handler) { PROGRAMLOG("ERROR Please Initialize ADC_Handler"); return; }
   PROGRAMLOG("%s",((ADC_Handler->ADC_TransmitReceive != NULL) & (ADC_Handler->ADC_DRDY_Read != NULL)) ? ("") : ("*** Warning! You Can NOT Use ReadAllContinuous Functions. ***\r\n*** Initialize both ADC_TransmitReceive and ADC_DRDY_Read in ADC_Handler struct ***\r\n\r\n"));
   
-	Delay_US(100); // Wait after power up at least 50us + tclk
+	ADS131_Delay_US(100); // Wait after power up at least 50us + tclk
   ADC_Handler->ADC_CS_LOW();
-	Delay_US(5);
+	ADS131_Delay_US(5);
 	ADC_Handler->ADC_Transmit(RESET_ADC);
-	Delay_US(5);
+	ADS131_Delay_US(5);
 	ADC_Handler->ADC_CS_HIGH();
-	Delay_US(100); // Wait after reset at least 50us + tclk
+	ADS131_Delay_US(100); // Wait after reset at least 50us + tclk
   
   PROGRAMLOG("Previous Regs Values: 0x%02X | 0x%02X | 0x%02X | 0x%02X\r\n",
     ADS1220_ReadReg(ADC_Handler,REGISTER00h),
@@ -237,13 +233,13 @@ ADS1220_Init(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
 void
 ADS1220_StartSync(ADS1220_Handler_t *ADC_Handler)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_Transmit(START_SYNC);
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
 }
 
 /**
@@ -254,13 +250,13 @@ ADS1220_StartSync(ADS1220_Handler_t *ADC_Handler)
 void
 ADS1220_Reset(ADS1220_Handler_t *ADC_Handler)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_Transmit(RESET_ADC);
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(100);
+  ADS131_Delay_US(100);
 }
 
 /**
@@ -271,13 +267,13 @@ ADS1220_Reset(ADS1220_Handler_t *ADC_Handler)
 void
 ADS1220_PowerDown(ADS1220_Handler_t *ADC_Handler)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_Transmit(POWERDOWN);
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
 }
 
 /**
@@ -290,17 +286,17 @@ ADS1220_PowerDown(ADS1220_Handler_t *ADC_Handler)
 void
 ADS1220_ReadData(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample)
 {
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADCDataValues.Part3 = ADC_Handler->ADC_Receive();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADCDataValues.Part2 = ADC_Handler->ADC_Receive();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   ADCDataValues.Part1 = ADC_Handler->ADC_Receive();
-  Delay_US(10);
+  ADS131_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  Delay_US(10);
+  ADS131_Delay_US(10);
   *ADCSample = ADCDataValues.INT32 / 256;
 //  PROGRAMLOG("Data read: 0x%02X\r\n",*ADCSample);
 }
@@ -411,8 +407,8 @@ ADS1220_ReadAllSingleShotDiff(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample
 {
   uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
   
-  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
-  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
+  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
+  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
 
   if (GainConfig) {  
     if (((Reg00hValue & 1) | (GainConfig[0] << 1)) != Reg00hValue)  
@@ -456,8 +452,8 @@ ADS1220_ReadAllSingleShotDiff(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample
 void
 ADS1220_ReadAllContinuousDiff(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample, ADS1220_GainConfig_t *GainConfig)
 {
-  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
-  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
+  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
+  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
   
   if (GainConfig) {
     uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
@@ -500,8 +496,8 @@ ADS1220_ReadAllSingleShotAVSS(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample
 {
   uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
   
-  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
-  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
+  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
+  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
   
   if (GainConfig)
   { 
@@ -568,8 +564,8 @@ ADS1220_ReadAllContinuousAVSS(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample
 {
   uint8_t Reg00hValue = ADS1220_ReadReg(ADC_Handler,REGISTER00h);
   
-  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
-  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can commment this line
+  ADS1220_StartSync(ADC_Handler);          // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
+  while(ADC_Handler->ADC_DRDY_Read());     // FOR WAKING UP. if you are using this function consecutively and quickly (less than ~54511.71875 us), you can comment this line
   
   if (GainConfig)
   {

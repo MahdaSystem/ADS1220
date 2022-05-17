@@ -2,14 +2,10 @@
  **********************************************************************************
  * @file   ADS1220.h
  * @author Ali Moallem (https://github.com/AliMoal)
- * @brief  
- *         Functionalities of the this file:
- *          + 
- *          + 
- *          + 
+ * @brief  For working with ADS1220 IC
  **********************************************************************************
  *
- *! Copyright (c) 2021 Mahda Embedded System (MIT License)
+ *! Copyright (c) 2022 Mahda Embedded System (MIT License)
  *!
  *! Permission is hereby granted, free of charge, to any person obtaining a copy
  *! of this software and associated documentation files (the "Software"), to deal
@@ -45,9 +41,9 @@ extern "C" {
 
 //? User Configurations and Notes ------------------------------------------------- //
 // SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed (period): 150ns (6.66MHz)
-#define USE_MACRO_DELAY         1            // 0: Use handler delay ,So you have to set ADC_Delay_US in Handler | 1: use Macro delay, So you have to set MACRO_DELAY_US Macro
-//#define MACRO_DELAY_US(x)                   // If you want to use Macro delay, place your delay function in microseconds here
-#define Debug_Enable                         // Uncomment if you want to use (depends on printf in stdio.h)
+#define ADS131_USE_MACRO_DELAY         1    // 0: Use handler delay ,So you have to set ADC_Delay_US in Handler | 1: use Macro delay, So you have to set ADS131_MACRO_DELAY_US Macro
+//#define ADS131_MACRO_DELAY_US(x)            // If you want to use Macro delay, place your delay function in microseconds here
+#define ADS131_Debug_Enable                 // Uncomment if you want to use (depends on printf in stdio.h)
 //#pragma anon_unions                         // Uncomment this line if yu are using Keil software
 //? ------------------------------------------------------------------------------- //
 
@@ -55,12 +51,12 @@ extern "C" {
 #define ADCValueToVoltage(x/*ADCvalue*/,v/*VREFF*/,g/*gain*/) (x * (float)v / 0x7FFFFF / g) // Use this to convert ADC value to Voltage - It Works
 
 //! DO NOT USE OR EDIT THIS BLOCK ------------------------------------------------- //
-#if USE_MACRO_DELAY == 0
-#define Delay_US(x)   ADS1220_Handler->ADC_Delay_US(x)
+#if ADS131_USE_MACRO_DELAY == 0
+#define ADS131_Delay_US(x)   ADS1220_Handler->ADC_Delay_US(x)
 #else
-#define Delay_US(x)   MACRO_DELAY_US(x)
-#ifndef MACRO_DELAY_US
-#error "MACRO_DELAY_US is not defined. Please Use handler delay or config MACRO_DELAY_US macro, You can choose it on USE_MACRO_DELAY define"
+#define ADS131_Delay_US(x)   ADS131_MACRO_DELAY_US(x)
+#ifndef ADS131_MACRO_DELAY_US
+#error "ADS131_MACRO_DELAY_US is not defined. Please Use handler delay or config ADS131_MACRO_DELAY_US macro, You can choose it on ADS131_USE_MACRO_DELAY define"
 #endif
 #endif
 
@@ -234,7 +230,7 @@ ADS1220_Handler_s {
   uint8_t (*ADC_TransmitReceive)(uint8_t Data);  // Can be initialized - Initialize this when you want to use ReadAllContinuous functions
   uint8_t (*ADC_DRDY_Read)(void);                // Can be initialized - Initialize this when you want to use ReadAllContinuous functions
   void (*ADC_Delay_US)(uint32_t);                // Must be initialized (Place here your delay in MicroSecond)
-  ADS131_OneSample ADCDataValues;                //!!! DO NOT USE OR EDIT THIS !!!
+  ADS131_OneSample_t ADCDataValues;              //!!! DO NOT USE OR EDIT THIS !!!
 } ADS1220_Handler_t;
 
 /**
@@ -246,50 +242,50 @@ ADS1220_Parameters_s {
   // REG 00h:
   // See ADS1220_InputMuxConfig enum
   // IMPORTANT NOTE : For settings where AINN = AVSS, the PGA must be disabled (PGA_BYPASS = 1) and only gains 1, 2, and 4 can be used.
-  ADS1220_InputMuxConfig InputMuxConfig; // default: AINP = AIN0, AINN = AIN1
+  ADS1220_InputMuxConfig_t InputMuxConfig; // default: AINP = AIN0, AINN = AIN1
   // See ADS1220_GainConfig enum
-  ADS1220_GainConfig     GainConfig; // default: 1
+  ADS1220_GainConfig_t     GainConfig; // default: 1
   // Disables and bypasses the internal low-noise PGA
   // Disabling the PGA reduces overall power consumption and allows the commonmode
   // voltage range (VCM) to span from AVSS � 0.1 V to AVDD + 0.1 V.
   // The PGA can only be disabled for gains 1, 2, and 4.
   // The PGA is always enabled for gain settings 8 to 128, regardless of the
   // PGA_BYPASS setting.
-  bool                   PGAdisable; // 0: PGA enabled (default) | 1: PGA disabled and bypassed
+  bool                      PGAdisable; // 0: PGA enabled (default) | 1: PGA disabled and bypassed
   
   // REG 01h:
   // See ADS1220_DataRate enum
-  ADS1220_DataRate       DataRate; // default: NormalMode: 20SPS | DutyCycleMode: 5SPS | TurboMode: 40SPS
+  ADS1220_DataRate_t       DataRate; // default: NormalMode: 20SPS | DutyCycleMode: 5SPS | TurboMode: 40SPS
   // See ADS1220_OperatingMode enum
-  ADS1220_OperatingMode  OperatingMode; // default: NormalMode
+  ADS1220_OperatingMode_t  OperatingMode; // default: NormalMode
   // This bit sets the conversion mode for the device.
-  bool                   ConversionMode; // 0: Single-shot mode (default) | 1: Continuous conversion mode
+  bool ConversionMode; // 0: Single-shot mode (default) | 1: Continuous conversion mode
   // This bit enables the internal temperature sensor and puts the device in temperature sensor mode.
   // The settings of configuration register 0 have no effect and the device uses the
   // internal reference for measurement when temperature sensor mode is enabled.
-  bool                   TempeSensorMode; // 0: Disables temperature sensor (default) | 1: Enables temperature sensor
+  bool                     TempeSensorMode; // 0: Disables temperature sensor (default) | 1: Enables temperature sensor
   // This bit controls the 10-�A, burn-out current sources.
   // The burn-out current sources can be used to detect sensor faults such as wire
   // breaks and shorted sensors.
-  bool                   BurnOutCurrentSrc; // 0: Current sources off (default) | 1: Current sources on
+  bool                     BurnOutCurrentSrc; // 0: Current sources off (default) | 1: Current sources on
   
   // REG 02h:
   // See ADS1220_VoltageRef enum
-  ADS1220_VoltageRef     VoltageRef; // default: Internal 2.048V
+  ADS1220_VoltageRef_t     VoltageRef; // default: Internal 2.048V
   // See ADS1220_FIRFilter enum
-  ADS1220_FIRFilter      FIRFilter; // default: No rejection
+  ADS1220_FIRFilter_t      FIRFilter; // default: No rejection
   // This bit configures the behavior of the low-side switch connected between AIN3/REFN1 and AVSS.
-  bool                   LowSodePwr; // 0: Switch is always open (default) | 1: Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
+  bool                     LowSodePwr; // 0: Switch is always open (default) | 1: Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
   // See ADS1220_IDACcurrent enum
-  ADS1220_IDACcurrent    IDACcurrent;
+  ADS1220_IDACcurrent_t    IDACcurrent;
   
   // REG 03h:
   // See ADS1220_IDACrouting enum , This is for IDAC1
-  ADS1220_IDACrouting    IDAC1routing; // default: Off
+  ADS1220_IDACrouting_t    IDAC1routing; // default: Off
   // See ADS1220_IDACrouting enum , This is for IDAC2
-  ADS1220_IDACrouting    IDAC2routing; // default: Off
+  ADS1220_IDACrouting_t    IDAC2routing; // default: Off
   // This bit controls the behavior of the DOUT/DRDY pin when new data are ready.
-  bool                   DRDYMode; // 0: Only the dedicated DRDY pin is used to indicate when data are ready (default) | 1: Data ready is indicated simultaneously on DOUT/DRDY and DRDY
+  bool                     DRDYMode; // 0: Only the dedicated DRDY pin is used to indicate when data are ready (default) | 1: Data ready is indicated simultaneously on DOUT/DRDY and DRDY
 } ADS1220_Parameters_t;
 
 /**
