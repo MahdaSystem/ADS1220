@@ -225,7 +225,7 @@ ADS1220_IDACrouting_e {
 
 /**
  * @brief  Handling Library
- * @note   User MUST configure This at the begining of the program before ADS1230_Init
+ * @note   User MUST configure This at the beginning of the program before ADS1230_Init
  */
 typedef struct
 ADS1220_Handler_s {
@@ -257,7 +257,7 @@ ADS1220_Parameters_s {
   // The PGA can only be disabled for gains 1, 2, and 4.
   // The PGA is always enabled for gain settings 8 to 128, regardless of the
   // PGA_BYPASS setting.
-  bool                      PGAdisable; // 0: PGA enabled (default) | 1: PGA disabled and bypassed
+  bool                     PGAdisable; // 0: PGA enabled (default) | 1: PGA disabled and bypassed
   
   // REG 01h:
   // See ADS1220_DataRate enum
@@ -265,12 +265,12 @@ ADS1220_Parameters_s {
   // See ADS1220_OperatingMode enum
   ADS1220_OperatingMode_t  OperatingMode; // default: NormalMode
   // This bit sets the conversion mode for the device.
-  bool ConversionMode; // 0: Single-shot mode (default) | 1: Continuous conversion mode
+  bool                     ConversionMode; // 0: Single-shot mode (default) | 1: Continuous conversion mode
   // This bit enables the internal temperature sensor and puts the device in temperature sensor mode.
   // The settings of configuration register 0 have no effect and the device uses the
   // internal reference for measurement when temperature sensor mode is enabled.
   bool                     TempeSensorMode; // 0: Disables temperature sensor (default) | 1: Enables temperature sensor
-  // This bit controls the 10-�A, burn-out current sources.
+  // This bit controls the 10-uA, burn-out current sources.
   // The burn-out current sources can be used to detect sensor faults such as wire
   // breaks and shorted sensors.
   bool                     BurnOutCurrentSrc; // 0: Current sources off (default) | 1: Current sources on
