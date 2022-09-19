@@ -34,7 +34,7 @@
 #define ADS1220_RawToAdcValue(oneData) ((int32_t)(((oneData[0] << 16) | (oneData[1] << 8) | (oneData[2])) << 8) / 256)
 
 //* Others ------------------------------------------------------------------------ //
-#ifdef Debug_Enable
+#ifdef ADS1220_Debug_Enable
 #include <stdio.h> // for debug
 #define PROGRAMLOG(arg...) printf(arg)
 #else
@@ -71,90 +71,90 @@ ADS1220Register_s {
  *! ==================================================================================
  **/
 static uint8_t
-ADS1220_ReadReg (ADS1220_Handler_t *ADC_Handler,ADS1220Register_t ADS1220REG)
+ADS1220_ReadReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG)
 {
 	uint8_t RecByte = 0;
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RREG | (ADS1220REG << 2));
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	RecByte = ADC_Handler->ADC_Receive();
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	return RecByte;
 };
 
 // This function Works but we do not need it
 //static void ADS1220_ReadAllRegs (ADS1220_Handler *ADC_Handler, uint8_t *ReadValues /*It is = [0]: REG00h | Number of Elements: 4*/)
 //{
-//  ADS131_Delay_US(10);
+//  ADS1220_Delay_US(10);
 //	ADC_Handler->ADC_CS_LOW();
-//	ADS131_Delay_US(10);
+//	ADS1220_Delay_US(10);
 //	ADC_Handler->ADC_Transmit(RREG | 3 /*(num reg to read: 4) - 1*/ /*starts from reg00h*/);
-//	ADS131_Delay_US(10);
+//	ADS1220_Delay_US(10);
 //	ReadValues[0] = ADC_Handler->ADC_Receive();
-//	ADS131_Delay_US(10);
+//	ADS1220_Delay_US(10);
 //  ReadValues[1] = ADC_Handler->ADC_Receive();
-//	ADS131_Delay_US(10);
+//	ADS1220_Delay_US(10);
 //  ReadValues[2] = ADC_Handler->ADC_Receive();
-//	ADS131_Delay_US(10);
+//	ADS1220_Delay_US(10);
 //  ReadValues[3] = ADC_Handler->ADC_Receive();
-//	ADS131_Delay_US(10);
+//	ADS1220_Delay_US(10);
 //	ADC_Handler->ADC_CS_HIGH();
-//  ADS131_Delay_US(10);
+//  ADS1220_Delay_US(10);
 //};
 
 static void
 ADS1220_WriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG, uint8_t RegisterValue)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_Transmit(WREG | (ADS1220REG << 2));
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RegisterValue);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 };
 
 static void
 ADS1220_WriteAllRegs (ADS1220_Handler_t *ADC_Handler, uint8_t *RegisterValue /*Must be = [0]: REG00h | Number of Elements: 4*/)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	ADS131_Delay_US(10);
-	ADC_Handler->ADC_Transmit(WREG | 3 /*(num reg to read: 4) - 1*//*starts from reg00h*/);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
+	ADC_Handler->ADC_Transmit(WREG | 3 /*(num reg to read: 4) - 1*/ /*starts from reg00h*/);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RegisterValue[0]);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
   ADC_Handler->ADC_Transmit(RegisterValue[1]);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
   ADC_Handler->ADC_Transmit(RegisterValue[2]);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
   ADC_Handler->ADC_Transmit(RegisterValue[3]);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 };
 
 static void
 ADS1220_ReadDataWriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1220REG, uint8_t RegisterValue, int32_t *ADCSample)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
-	ADS131_Delay_US(10);
-  ADCDataValues.Part3 = ADC_Handler->ADC_TransmitReceive(NULL);
-  ADS131_Delay_US(10);
-  ADCDataValues.Part2 = ADC_Handler->ADC_TransmitReceive(WREG | (ADS1220REG << 2));
-  ADS131_Delay_US(10);
-  ADCDataValues.Part1 = ADC_Handler->ADC_TransmitReceive(RegisterValue);
-	ADS131_Delay_US(10);
+	ADS1220_Delay_US(10);
+  ADC_Handler->ADCDataValues.Part3 = ADC_Handler->ADC_TransmitReceive(0);
+  ADS1220_Delay_US(10);
+  ADC_Handler->ADCDataValues.Part2 = ADC_Handler->ADC_TransmitReceive(WREG | (ADS1220REG << 2));
+  ADS1220_Delay_US(10);
+  ADC_Handler->ADCDataValues.Part1 = ADC_Handler->ADC_TransmitReceive(RegisterValue);
+	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
-  *ADCSample = ADCDataValues.INT32 / 256;
+  ADS1220_Delay_US(10);
+  *ADCSample = ADC_Handler->ADCDataValues.INT32 / 256;
 //  PROGRAMLOG("%x\r\n",(ADCDataValues.Part3<<16) | (ADCDataValues.Part2<<8) | (ADCDataValues.Part1));
 };
 
@@ -174,16 +174,17 @@ ADS1220_ReadDataWriteReg (ADS1220_Handler_t *ADC_Handler, ADS1220Register_t ADS1
 void
 ADS1220_Init(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
 {
-  if (!ADC_Handler) { PROGRAMLOG("ERROR Please Initialize ADC_Handler"); return; }
+  PROGRAMLOG("------------------------------\r\nADS1220_Init...\r\n");
+  if (!ADC_Handler) { PROGRAMLOG("ERROR Please Initialize ADC_Handler\r\n"); return; }
   PROGRAMLOG("%s",((ADC_Handler->ADC_TransmitReceive != NULL) & (ADC_Handler->ADC_DRDY_Read != NULL)) ? ("") : ("*** Warning! You Can NOT Use ReadAllContinuous Functions. ***\r\n*** Initialize both ADC_TransmitReceive and ADC_DRDY_Read in ADC_Handler struct ***\r\n\r\n"));
   
-	ADS131_Delay_US(100); // Wait after power up at least 50us + tclk
+	ADS1220_Delay_US(100); // Wait after power up at least 50us + tclk
   ADC_Handler->ADC_CS_LOW();
-	ADS131_Delay_US(5);
+	ADS1220_Delay_US(5);
 	ADC_Handler->ADC_Transmit(RESET_ADC);
-	ADS131_Delay_US(5);
+	ADS1220_Delay_US(5);
 	ADC_Handler->ADC_CS_HIGH();
-	ADS131_Delay_US(100); // Wait after reset at least 50us + tclk
+	ADS1220_Delay_US(100); // Wait after reset at least 50us + tclk
   
   PROGRAMLOG("Previous Regs Values: 0x%02X | 0x%02X | 0x%02X | 0x%02X\r\n",
     ADS1220_ReadReg(ADC_Handler,REGISTER00h),
@@ -233,13 +234,13 @@ ADS1220_Init(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
 void
 ADS1220_StartSync(ADS1220_Handler_t *ADC_Handler)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_Transmit(START_SYNC);
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 }
 
 /**
@@ -250,13 +251,13 @@ ADS1220_StartSync(ADS1220_Handler_t *ADC_Handler)
 void
 ADS1220_Reset(ADS1220_Handler_t *ADC_Handler)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_Transmit(RESET_ADC);
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(100);
+  ADS1220_Delay_US(100);
 }
 
 /**
@@ -267,13 +268,13 @@ ADS1220_Reset(ADS1220_Handler_t *ADC_Handler)
 void
 ADS1220_PowerDown(ADS1220_Handler_t *ADC_Handler)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_Transmit(POWERDOWN);
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
 }
 
 /**
@@ -286,18 +287,18 @@ ADS1220_PowerDown(ADS1220_Handler_t *ADC_Handler)
 void
 ADS1220_ReadData(ADS1220_Handler_t *ADC_Handler, int32_t *ADCSample)
 {
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
   ADC_Handler->ADC_CS_LOW();
-  ADS131_Delay_US(10);
-  ADCDataValues.Part3 = ADC_Handler->ADC_Receive();
-  ADS131_Delay_US(10);
-  ADCDataValues.Part2 = ADC_Handler->ADC_Receive();
-  ADS131_Delay_US(10);
-  ADCDataValues.Part1 = ADC_Handler->ADC_Receive();
-  ADS131_Delay_US(10);
+  ADS1220_Delay_US(10);
+  ADC_Handler->ADCDataValues.Part3 = ADC_Handler->ADC_Receive();
+  ADS1220_Delay_US(10);
+  ADC_Handler->ADCDataValues.Part2 = ADC_Handler->ADC_Receive();
+  ADS1220_Delay_US(10);
+  ADC_Handler->ADCDataValues.Part1 = ADC_Handler->ADC_Receive();
+  ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_HIGH();
-  ADS131_Delay_US(10);
-  *ADCSample = ADCDataValues.INT32 / 256;
+  ADS1220_Delay_US(10);
+  *ADCSample = ADC_Handler->ADCDataValues.INT32 / 256;
 //  PROGRAMLOG("Data read: 0x%02X\r\n",*ADCSample);
 }
 

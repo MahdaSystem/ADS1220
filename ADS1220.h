@@ -38,30 +38,36 @@ extern "C" {
 //* Includes ---------------------------------------------------------------------- //
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 
 //? User Configurations and Notes ------------------------------------------------- //
 // SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed (period): 150ns (6.66MHz)
-#define ADS131_USE_MACRO_DELAY         1    // 0: Use handler delay ,So you have to set ADC_Delay_US in Handler | 1: use Macro delay, So you have to set ADS131_MACRO_DELAY_US Macro
-//#define ADS131_MACRO_DELAY_US(x)            // If you want to use Macro delay, place your delay function in microseconds here
-#define ADS131_Debug_Enable                 // Uncomment if you want to use (depends on printf in stdio.h)
+#define ADS1220_USE_MACRO_DELAY         0    // 0: Use handler delay ,So you have to set ADC_Delay_US in Handler | 1: use Macro delay, So you have to set ADS1220_MACRO_DELAY_US Macro
+//#define ADS1220_MACRO_DELAY_US(x)            // If you want to use Macro delay, place your delay function in microseconds here
+// #define ADS1220_Debug_Enable                 // Uncomment if you want to use (depends on printf in stdio.h)
 //#pragma anon_unions                         // Uncomment this line if yu are using Keil software
 //? ------------------------------------------------------------------------------- //
 
 //* Defines and Macros ------------------------------------------------------------ //
-#define ADCValueToVoltage(x/*ADCvalue*/,v/*VREFF*/,g/*gain*/) (x * (float)v / 0x7FFFFF / g) // Use this to convert ADC value to Voltage - It Works
+#define ADCValueToVoltage(x/*ADCvalue*/, v/*VREFF*/, g/*gain*/) (x * (float)v / 0x7FFFFF / g) // Use this to convert ADC value to Voltage - It Works
+#define ADCValueToWeight(x/*ADCvalue*/, mw/*Max Weight*/, s/*Sensitivity*/) (x * (float)mw / 0x7FFFFF /s )
+#define ADCValueToDisplacement(x/*ADCvalue*/, md /*Max Displacement*/) (x * (float)md / 0x7FFFFF)
+#define ADCValueToTemperature(x/*ADCvalue*/, t/*Temperature*/) (x * (float)t / (float)0x7FFFFF)
+#define ADCValueToTemperatureRTD(x/*ADCvalue*/, r/*RREF*/, r0/*R0-NOMINAL*/, a/*Alpha-TCR*/, g/*gain*/) ((x / (float)0x7FFFFF * 2.0f * r / g / r0 - 1) / a) // TCR(a) = (R100 - R0) / (R0 * 100)
+#define ADCValueToCurrent(x/*ADCvalue*/, r/*Resistance*/, v/*VREFF*/, g/*gain*/) (x / (float)r * v / (float)0x7FFFFF / g)
 
 //! DO NOT USE OR EDIT THIS BLOCK ------------------------------------------------- //
-#if ADS131_USE_MACRO_DELAY == 0
-#define ADS131_Delay_US(x)   ADS1220_Handler->ADC_Delay_US(x)
+#if ADS1220_USE_MACRO_DELAY == 0
+#define ADS1220_Delay_US(x)   ADC_Handler->ADC_Delay_US(x)
 #else
-#define ADS131_Delay_US(x)   ADS131_MACRO_DELAY_US(x)
-#ifndef ADS131_MACRO_DELAY_US
-#error "ADS131_MACRO_DELAY_US is not defined. Please Use handler delay or config ADS131_MACRO_DELAY_US macro, You can choose it on ADS131_USE_MACRO_DELAY define"
+#define ADS1220_Delay_US(x)   ADS1220_MACRO_DELAY_US(x)
+#ifndef ADS1220_MACRO_DELAY_US
+#error "ADS1220_MACRO_DELAY_US is not defined. Please Use handler delay or config ADS1220_MACRO_DELAY_US macro, You can choose it on ADS1220_USE_MACRO_DELAY define"
 #endif
 #endif
 
 typedef union
-ADS131_OneSample_u {
+ADS1220_OneSample_u {
   struct {
     uint32_t Zero :8; // Always Zero
     uint32_t Part1:8;
@@ -69,7 +75,7 @@ ADS131_OneSample_u {
     uint32_t Part3:8;
   };
   int32_t INT32;
-} ADS131_OneSample_t;
+} ADS1220_OneSample_t;
 //! ------------------------------------------------------------------------------- //
 
 /**
@@ -96,8 +102,8 @@ ADS1220_InputMuxConfig_e {
   P1NAVSS   = 9,  // AINP = AIN1, AINN = AVSS
   P2NAVSS   = 10, // AINP = AIN2, AINN = AVSS
   P3NAVSS   = 11, // AINP = AIN3, AINN = AVSS
-  Mode1     = 12, // (V(REFPx) � V(REFNx)) / 4 monitor (PGA bypassed)
-  Mode2     = 13, // (AVDD � AVSS) / 4 monitor (PGA bypassed)
+  Mode1     = 12, // (V(REFPx) - V(REFNx)) / 4 monitor (PGA bypassed)
+  Mode2     = 13, // (AVDD - AVSS) / 4 monitor (PGA bypassed)
   Mode3     = 14  // AINP and AINN shorted to (AVDD + AVSS) / 2
 } ADS1220_InputMuxConfig_t;
 
@@ -166,7 +172,7 @@ ADS1220_VoltageRef_e {
   Internal      = 0, // Internal 2.048-V reference selected (default)
   ExternalREF0  = 1, // External reference selected using dedicated REFP0 and REFN0 inputs
   ExternalREF1  = 2, // External reference selected using AIN0/REFP1 and AIN3/REFN1 inputs
-  AnalogSupply  = 3  // Analog supply (AVDD � AVSS) used as reference
+  AnalogSupply  = 3  // Analog supply (AVDD - AVSS) used as reference
 } ADS1220_VoltageRef_t;
 
 /**
@@ -230,7 +236,7 @@ ADS1220_Handler_s {
   uint8_t (*ADC_TransmitReceive)(uint8_t Data);  // Can be initialized - Initialize this when you want to use ReadAllContinuous functions
   uint8_t (*ADC_DRDY_Read)(void);                // Can be initialized - Initialize this when you want to use ReadAllContinuous functions
   void (*ADC_Delay_US)(uint32_t);                // Must be initialized (Place here your delay in MicroSecond)
-  ADS131_OneSample_t ADCDataValues;              //!!! DO NOT USE OR EDIT THIS !!!
+  ADS1220_OneSample_t ADCDataValues;              //!!! DO NOT USE OR EDIT THIS !!!
 } ADS1220_Handler_t;
 
 /**
