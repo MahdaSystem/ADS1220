@@ -54,7 +54,7 @@ void main (void)
     Handler.ADC_Receive = RECEIVE;
     Handler.ADC_Delay_US = DELAY;
     
-    // Passing Parameters to use default configurations.
+    // Passing Parameters as NULL to use default configurations.
     ADS1220_Init(&Handler, NULL);
 
     // Default conversion mode is Single-shot
