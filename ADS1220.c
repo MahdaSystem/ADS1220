@@ -126,7 +126,7 @@ ADS1220_WriteAllRegs (ADS1220_Handler_t *ADC_Handler, uint8_t *RegisterValue /*M
   ADS1220_Delay_US(10);
 	ADC_Handler->ADC_CS_LOW();
 	ADS1220_Delay_US(10);
-	ADC_Handler->ADC_Transmit(WREG | 3 /*(num reg to read: 4) - 1*/ /*starts from reg00h*/);
+	ADC_Handler->ADC_Transmit(WREG | 3 /*(num reg to write: 4) - 1*/ /*starts from reg00h*/);
 	ADS1220_Delay_US(10);
 	ADC_Handler->ADC_Transmit(RegisterValue[0]);
 	ADS1220_Delay_US(10);
@@ -199,7 +199,7 @@ ADS1220_Init(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Parameters)
   {
     RegsValue[0] = (Parameters->InputMuxConfig << 4) | (Parameters->GainConfig << 1) | Parameters->PGAdisable;
     RegsValue[1] = (Parameters->DataRate << 5) | (Parameters->OperatingMode << 3) | (Parameters->ConversionMode << 2) | (Parameters->TempeSensorMode << 1) | Parameters->BurnOutCurrentSrc;
-    RegsValue[2] = (Parameters->VoltageRef << 6) | (Parameters->FIRFilter << 4) | (Parameters->LowSodePwr << 3) | Parameters->IDACcurrent;
+    RegsValue[2] = (Parameters->VoltageRef << 6) | (Parameters->FIRFilter << 4) | (Parameters->LowSidePwr << 3) | Parameters->IDACcurrent;
     RegsValue[3] = (Parameters->IDAC1routing << 5) | (Parameters->IDAC2routing << 2) | (Parameters->DRDYMode << 1);
     ADS1220_WriteAllRegs(ADC_Handler,RegsValue);
     
@@ -322,9 +322,9 @@ ADS1220_ChangeConfig(ADS1220_Handler_t *ADC_Handler, ADS1220_Parameters_t * Para
   uint8_t RegsValue[4] = {0};
   if (Parameters)
   {
-    RegsValue[0] = (Parameters->InputMuxConfig << 4) | (Parameters->PGAdisable << 1) | Parameters->PGAdisable;
+    RegsValue[0] = (Parameters->InputMuxConfig << 4) | (Parameters->GainConfig << 1) | Parameters->PGAdisable;
     RegsValue[1] = (Parameters->DataRate << 5) | (Parameters->OperatingMode << 3) | (Parameters->ConversionMode << 2) | (Parameters->TempeSensorMode << 1) | Parameters->BurnOutCurrentSrc;
-    RegsValue[2] = (Parameters->VoltageRef << 6) | (Parameters->FIRFilter << 4) | (Parameters->LowSodePwr << 3) | Parameters->IDACcurrent;
+    RegsValue[2] = (Parameters->VoltageRef << 6) | (Parameters->FIRFilter << 4) | (Parameters->LowSidePwr << 3) | Parameters->IDACcurrent;
     RegsValue[3] = (Parameters->IDAC1routing << 5) | (Parameters->IDAC2routing << 2) | (Parameters->DRDYMode << 1);
     ADS1220_WriteAllRegs(ADC_Handler,RegsValue);
     

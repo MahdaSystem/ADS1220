@@ -44,17 +44,17 @@ extern "C" {
 // SPI Configuration : 8Bits, CPOL=LOW(0), CPHA=2EDGE(1), Max speed (period): 150ns (6.66MHz)
 #define ADS1220_USE_MACRO_DELAY         0    // 0: Use handler delay ,So you have to set ADC_Delay_US in Handler | 1: use Macro delay, So you have to set ADS1220_MACRO_DELAY_US Macro
 //#define ADS1220_MACRO_DELAY_US(x)            // If you want to use Macro delay, place your delay function in microseconds here
-// #define ADS1220_Debug_Enable                 // Uncomment if you want to use (depends on printf in stdio.h)
-//#pragma anon_unions                         // Uncomment this line if yu are using Keil software
+//#define ADS1220_Debug_Enable                 // Uncomment if you want to use (depends on printf in stdio.h)
+//#pragma anon_unions                          // Uncomment this line if yu are using Keil software
 //? ------------------------------------------------------------------------------- //
 
 //* Defines and Macros ------------------------------------------------------------ //
-#define ADCValueToVoltage(x/*ADCvalue*/, v/*VREFF*/, g/*gain*/) (x * (float)v / 0x7FFFFF / g) // Use this to convert ADC value to Voltage - It Works
-#define ADCValueToWeight(x/*ADCvalue*/, mw/*Max Weight*/, s/*Sensitivity*/) (x * (float)mw / 0x7FFFFF /s )
-#define ADCValueToDisplacement(x/*ADCvalue*/, md /*Max Displacement*/) (x * (float)md / 0x7FFFFF)
-#define ADCValueToTemperature(x/*ADCvalue*/, t/*Temperature*/) (x * (float)t / (float)0x7FFFFF)
-#define ADCValueToTemperatureRTD(x/*ADCvalue*/, r/*RREF*/, r0/*R0-NOMINAL*/, a/*Alpha-TCR*/, g/*gain*/) ((x / (float)0x7FFFFF * 2.0f * r / g / r0 - 1) / a) // TCR(a) = (R100 - R0) / (R0 * 100)
-#define ADCValueToCurrent(x/*ADCvalue*/, r/*Resistance*/, v/*VREFF*/, g/*gain*/) (x / (float)r * v / (float)0x7FFFFF / g)
+#define ADCValueToVoltage(x/*ADCvalue*/, v/*VREFF*/, g/*gain*/) ((float)x * v / (float)0x7FFFFF / g) // Use this to convert ADC value to Voltage - It Works
+#define ADCValueToWeight(x/*ADCvalue*/, mw/*Max Weight*/, s/*Sensitivity*/, g/*gain*/) ((float)x * mw / (float)0x7FFFFF /s /g)
+#define ADCValueToDisplacement(x/*ADCvalue*/, md /*Max Displacement*/) ((float)x * md / (float)0x7FFFFF)
+#define ADCValueToTemperature(x/*ADCvalue*/, t/*Temperature*/) ((float)x * t / (float)0x7FFFFF)
+#define ADCValueToTemperatureRTD(x/*ADCvalue*/, r/*RREF*/, r0/*R0-NOMINAL*/, a/*Alpha-TCR*/, g/*gain*/) (((float)x / (float)0x7FFFFF * 2.0f * r / g / r0 - 1) / a) // TCR(a) = (R100 - R0) / (R0 * 100)
+#define ADCValueToCurrent(x/*ADCvalue*/, r/*Resistance*/, v/*VREFF*/, g/*gain*/) ((float)x / r * v / (float)0x7FFFFF / g)
 
 //! DO NOT USE OR EDIT THIS BLOCK ------------------------------------------------- //
 #if ADS1220_USE_MACRO_DELAY == 0
@@ -241,7 +241,7 @@ ADS1220_Handler_s {
 
 /**
  * @brief  ADC Parameters
- * @note   User Can configure This at the begining of the program before ADS1230_Init
+ * @note   User Can configure This at the beginning of the program before ADS1230_Init
  */
 typedef struct
 ADS1220_Parameters_s {
@@ -253,7 +253,7 @@ ADS1220_Parameters_s {
   ADS1220_GainConfig_t     GainConfig; // default: 1
   // Disables and bypasses the internal low-noise PGA
   // Disabling the PGA reduces overall power consumption and allows the commonmode
-  // voltage range (VCM) to span from AVSS � 0.1 V to AVDD + 0.1 V.
+  // voltage range (VCM) to span from AVSS - 0.1 V to AVDD + 0.1 V.
   // The PGA can only be disabled for gains 1, 2, and 4.
   // The PGA is always enabled for gain settings 8 to 128, regardless of the
   // PGA_BYPASS setting.
@@ -281,7 +281,7 @@ ADS1220_Parameters_s {
   // See ADS1220_FIRFilter enum
   ADS1220_FIRFilter_t      FIRFilter; // default: No rejection
   // This bit configures the behavior of the low-side switch connected between AIN3/REFN1 and AVSS.
-  bool                     LowSodePwr; // 0: Switch is always open (default) | 1: Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
+  bool                     LowSidePwr; // 0: Switch is always open (default) | 1: Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
   // See ADS1220_IDACcurrent enum
   ADS1220_IDACcurrent_t    IDACcurrent;
   
@@ -302,7 +302,7 @@ ADS1220_Parameters_s {
 
 /**
  * @brief  Initializes The ADC and Library
- * @note   If You pass Parameters as NULL, All Settings will set default. See ADS1220_Parameters struct to know what are default values
+ * @note   If You pass Parameters as NULL, All Settings will be set as default. See ADS1220_Parameters struct to know what are default values.
  * @param  ADC_Handler: Pointer Of Library Handler
  * @param  Parameters:  Pointer Of ADC Parameters
  * @retval None
